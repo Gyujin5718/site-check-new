@@ -232,15 +232,36 @@ const A4ReportDocument = forwardRef(({ issue }, ref) => {
                             position: 'absolute',
                             left: `${issue.pin.x}%`,
                             top: `${issue.pin.y}%`,
-                            transform: 'translate(-50%, -50%)',
-                            width: '14px',
-                            height: '14px',
-                            backgroundColor: '#ef4444',
-                            borderRadius: '50%',
-                            border: '2px solid #fff',
-                            boxShadow: '0 0 4px rgba(0,0,0,0.4)',
+                            transform: 'translate(-50%, -100%)',
+                            pointerEvents: 'none',
+                            filter: 'drop-shadow(0 1.5px 2.5px rgba(0,0,0,0.4))',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
                           }}
-                        />
+                        >
+                          <svg width="16" height="21" viewBox="0 0 24 30" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M12 0C5.37 0 0 5.37 0 12C0 18.8 10.5 28.8 11.4 29.6C11.7 29.9 12.3 29.9 12.6 29.6C13.5 28.8 24 18.8 24 12C24 5.37 18.63 0 12 0Z"
+                              fill="#e11d48"
+                            />
+                            <circle cx="12" cy="11" r="4.5" fill="#ffffff" />
+                            <circle cx="12" cy="11" r="2" fill="#e11d48" />
+                          </svg>
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: '-2px',
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              width: '4px',
+                              height: '4px',
+                              backgroundColor: '#e11d48',
+                              borderRadius: '50%',
+                              border: '1px solid #ffffff',
+                            }}
+                          />
+                        </div>
                       )}
                     </div>
                   ) : (
