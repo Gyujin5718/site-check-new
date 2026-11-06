@@ -3,6 +3,10 @@ import { KAKAO_CLIENT_ID, getKakaoRedirectUri } from '../constants/config';
 
 export default function LoginView() {
   const handleKakaoLogin = () => {
+    if (!KAKAO_CLIENT_ID) {
+      alert('카카오 REST API 키(REACT_APP_KAKAO_CLIENT_ID)가 설정되지 않았습니다.');
+      return;
+    }
     const redirectUri = getKakaoRedirectUri();
     const kakaoAuthUrl = `https://kauth.kakao.com/oauth/authorize?client_id=${KAKAO_CLIENT_ID}&redirect_uri=${encodeURIComponent(
       redirectUri

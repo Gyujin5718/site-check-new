@@ -1,7 +1,8 @@
 // 환경 변수 및 설정 상수
 
-export const KAKAO_CLIENT_ID =
-  process.env.REACT_APP_KAKAO_CLIENT_ID || 'b1788a69ad40e17245ccac45a2f9cd12';
+export const KAKAO_CLIENT_ID = (
+  process.env.REACT_APP_KAKAO_CLIENT_ID || 'b1788a69ad40e17245ccac45a2f9cd12'
+).trim();
 
 export const getKakaoRedirectUri = () => {
   return `${window.location.origin}/auth/kakao/callback`;
