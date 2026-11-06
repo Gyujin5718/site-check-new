@@ -53,7 +53,7 @@ export default function App() {
 
     if (code && !isAuthProcessingRef.current) {
       isAuthProcessingRef.current = true;
-      window.history.replaceState({}, document.title, window.location.pathname);
+      window.history.replaceState({}, document.title, '/');
 
       authenticateWithKakao(code, getKakaoRedirectUri())
         .then((data) => {

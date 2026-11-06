@@ -7,6 +7,7 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
   const printDocRef = useRef(null);
 
   const { isGeneratingPdf, generateA4Pdf, downloadPdf } = usePdfGenerator();
@@ -51,12 +52,17 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
       return;
     }
 
-    const pdf = await generateA4Pdf(printDocRef.current);
-    if (!pdf) return;
-
-    const pdfBase64 = pdf.output('datauristring');
+    setIsSendingEmail(true);
 
     try {
+      const pdf = await generateA4Pdf(printDocRef.current);
+      if (!pdf) {
+        alert('PDF 생성에 실패하여 메일을 발송할 수 없습니다.');
+        return;
+      }
+
+      const pdfBase64 = pdf.output('datauristring');
+
       const resData = await sendIssueEmail({
         toEmail: targetEmail,
         projectName: selectedIssue.projectName,
@@ -70,15 +76,20 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
         const updated = { ...selectedIssue, isSent: true };
         onUpdateIssue(updated);
         setSelectedIssue(updated);
-        alert(
-          `[발송 완료]\n공사감독일지 PDF 첨부파일이 현장소장(${targetEmail})에게 성공적으로 전송되었습니다.`
-        );
+
+        let successMsg = `[발송 완료]\n공사감독일지 PDF 첨부파일이 현장소장(${targetEmail})에게 성공적으로 전송되었습니다.`;
+        if (resData.previewUrl) {
+          successMsg += `\n\n(가상 테스트 메일이 발송되었습니다. 콘솔 또는 미리보기 URL에서 확인 가능합니다)\n${resData.previewUrl}`;
+        }
+        alert(successMsg);
       } else {
-        alert(`발송 실패: ${resData.error || '서버 오류'}`);
+        alert(`발송 실패: ${resData.error || resData.message || '서버 오류'}`);
       }
     } catch (err) {
       console.error('메일 전송 통신 오류:', err);
-      alert('백엔드 서버가 켜져 있는지 확인해주세요.');
+      alert(`메일 전송 오류: ${err.message || '백엔드 서버 통신 실패'}\n(백엔드 서버가 켜져 있는지 확인해주세요)`);
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -288,21 +299,23 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
 
         <button
           onClick={handleSendEmailWithPdf}
-          disabled={isGeneratingPdf}
+          disabled={isGeneratingPdf || isSendingEmail}
           style={{
             width: '100%',
             padding: '15px',
-            backgroundColor: selectedIssue.isSent ? '#64748b' : '#059669',
+            backgroundColor: isSendingEmail ? '#0284c7' : selectedIssue.isSent ? '#64748b' : '#059669',
             color: '#fff',
             border: 'none',
             borderRadius: '12px',
             fontSize: '15px',
             fontWeight: '800',
-            cursor: isGeneratingPdf ? 'not-allowed' : 'pointer',
+            cursor: isGeneratingPdf || isSendingEmail ? 'not-allowed' : 'pointer',
             boxShadow: '0 4px 12px rgba(5,150,105,0.3)',
           }}
         >
-          {selectedIssue.isSent
+          {isSendingEmail
+            ? '⏳ PDF 생성 및 이메일 전송 중...'
+            : selectedIssue.isSent
             ? '✓ 현장소장에게 이미 발송됨 (PDF 재발송)'
             : '📨 소장에게 A4 PDF 첨부하여 공식 발송'}
         </button>
