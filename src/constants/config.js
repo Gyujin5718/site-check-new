@@ -40,6 +40,7 @@ export const INITIAL_ISSUES = [
     projectName: '토성초등학교 공간재구조화 및 리모델링공사',
     supervisorName: '홍길동',
     category: '품질 관리',
+    summary: '[품질 관리] 2층 복도 단차 부위 마감 몰탈 불량 전면 재시공 지시',
     floor: '2층',
     floorPlanUrl: 'https://images.unsplash.com/photo-1513694203232-719a280e022f?auto=format&fit=crop&w=800&q=80',
     // 백분율(%) 단위로 저장된 좌표 (가로 45%, 세로 35%)

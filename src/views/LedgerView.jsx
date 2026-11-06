@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import A4ReportDocument from '../components/A4ReportDocument';
+import A4ReportDocument, { getIssueSummary } from '../components/A4ReportDocument';
 import { usePdfGenerator } from '../hooks/usePdfGenerator';
 import { sendIssueEmail } from '../api';
 
@@ -7,6 +7,7 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
   const [selectedIssue, setSelectedIssue] = useState(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
+  const [editSummary, setEditSummary] = useState('');
   const [isSendingEmail, setIsSendingEmail] = useState(false);
   const printDocRef = useRef(null);
 
@@ -15,7 +16,8 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
   const handleSelectIssue = (issue) => {
     setSelectedIssue(issue);
     setIsEditing(false);
-    setEditContent(issue.content);
+    setEditContent(issue.content || '');
+    setEditSummary(getIssueSummary(issue));
   };
 
   const handleBackToList = () => {
@@ -25,7 +27,11 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
 
   const handleSaveEdit = () => {
     if (!selectedIssue) return;
-    const updated = { ...selectedIssue, content: editContent };
+    const updated = {
+      ...selectedIssue,
+      summary: editSummary.trim(),
+      content: editContent.trim(),
+    };
     onUpdateIssue(updated);
     setSelectedIssue(updated);
     setIsEditing(false);
@@ -68,6 +74,7 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
         projectName: selectedIssue.projectName,
         date: selectedIssue.createdAt,
         category: selectedIssue.category,
+        summary: getIssueSummary(selectedIssue),
         content: selectedIssue.content,
         pdfBase64: pdfBase64,
       });
@@ -154,11 +161,24 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
               <div style={{ margin: '0 0 6px', fontSize: '11px', color: '#64748b' }}>
                 {item.createdAt} 등록건
               </div>
+              <div
+                style={{
+                  margin: '0 0 4px',
+                  fontSize: '12.5px',
+                  fontWeight: '700',
+                  color: '#1e293b',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                }}
+              >
+                {getIssueSummary(item)}
+              </div>
               <p
                 style={{
                   margin: 0,
-                  fontSize: '12px',
-                  color: '#334155',
+                  fontSize: '11.5px',
+                  color: '#64748b',
                   whiteSpace: 'nowrap',
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
@@ -225,53 +245,102 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
       {isEditing && (
         <div
           style={{
-            marginBottom: '10px',
+            marginBottom: '12px',
             backgroundColor: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '10px',
+            border: '1px solid #cbd5e1',
+            borderRadius: '10px',
+            padding: '12px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.04)',
           }}
         >
-          <label
-            style={{
-              fontSize: '11px',
-              fontWeight: '700',
-              color: '#4f46e5',
-              marginBottom: '4px',
-              display: 'block',
-            }}
-          >
-            ■ 업무 내용 수정 모드
-          </label>
-          <textarea
-            rows="3"
-            value={editContent}
-            onChange={(e) => setEditContent(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '6px',
-              boxSizing: 'border-box',
-              fontSize: '12px',
-              border: '1px solid #cbd5e1',
-              borderRadius: '4px',
-            }}
-          />
-          <button
-            onClick={handleSaveEdit}
-            style={{
-              marginTop: '6px',
-              padding: '6px 12px',
-              backgroundColor: '#4f46e5',
-              color: '#fff',
-              border: 'none',
-              borderRadius: '6px',
-              fontSize: '11px',
-              fontWeight: '700',
-              cursor: 'pointer',
-            }}
-          >
-            변경사항 저장
-          </button>
+          <div style={{ marginBottom: '10px' }}>
+            <label
+              style={{
+                fontSize: '11.5px',
+                fontWeight: '700',
+                color: '#4f46e5',
+                marginBottom: '4px',
+                display: 'block',
+              }}
+            >
+              ■ 주요 업무 (한 줄 요약)
+            </label>
+            <input
+              type="text"
+              value={editSummary}
+              onChange={(e) => setEditSummary(e.target.value)}
+              placeholder="예: [안전 관리] 용접 작업 화재예방 안전조치 미이행에 따른 작업 중지 및 시정 지시"
+              style={{
+                width: '100%',
+                padding: '8px',
+                boxSizing: 'border-box',
+                fontSize: '12px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '6px',
+              }}
+            />
+          </div>
+
+          <div>
+            <label
+              style={{
+                fontSize: '11.5px',
+                fontWeight: '700',
+                color: '#4f46e5',
+                marginBottom: '4px',
+                display: 'block',
+              }}
+            >
+              ■ 업무 내용 및 지시사항 (상세)
+            </label>
+            <textarea
+              rows="4"
+              value={editContent}
+              onChange={(e) => setEditContent(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '8px',
+                boxSizing: 'border-box',
+                fontSize: '12px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '6px',
+                lineHeight: '1.5',
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', marginTop: '10px' }}>
+            <button
+              onClick={handleSaveEdit}
+              style={{
+                padding: '8px 16px',
+                backgroundColor: '#4f46e5',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+              }}
+            >
+              변경사항 저장
+            </button>
+            <button
+              onClick={() => setIsEditing(false)}
+              style={{
+                padding: '8px 14px',
+                backgroundColor: '#94a3b8',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '6px',
+                fontSize: '12px',
+                fontWeight: '700',
+                cursor: 'pointer',
+              }}
+            >
+              취소
+            </button>
+          </div>
         </div>
       )}
 

@@ -1,5 +1,41 @@
 import React, { forwardRef } from 'react';
 
+/**
+ * 지적 사항의 '주요 업무' 한 줄 요약을 반환합니다.
+ * 1) issue.summary가 있으면 우선 사용
+ * 2) 없으면 issue.content에서 첫 문장을 기반으로 간결하게 추출
+ */
+export const getIssueSummary = (issue) => {
+  if (!issue) return '';
+  if (issue.summary && issue.summary.trim()) {
+    const s = issue.summary.trim();
+    if (s.startsWith('[')) return s;
+    return issue.category ? `[${issue.category}] ${s}` : s;
+  }
+
+  // summary가 명시적으로 없을 경우 content에서 한 줄 요약 지능적 추출
+  const content = (issue.content || '').trim();
+  if (!content || content === '특이사항 없음') {
+    return issue.category ? `[${issue.category}] 현장 검측 및 특이사항 점검` : '현장 검측 및 특이사항 점검';
+  }
+
+  // 문장 단위 분리 (마침표, 줄바꿈 등)
+  const sentences = content
+    .split(/(?<=[.?!])\s+|\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  const firstSentence = sentences[0] || content;
+  let cleanSentence = firstSentence.replace(/[.?!]+$/, '').trim();
+
+  if (cleanSentence.length > 45) {
+    cleanSentence = cleanSentence.substring(0, 42).trim() + '...';
+  }
+
+  if (cleanSentence.startsWith('[')) return cleanSentence;
+  return issue.category ? `[${issue.category}] ${cleanSentence}` : cleanSentence;
+};
+
 const A4ReportDocument = forwardRef(({ issue }, ref) => {
   if (!issue) return null;
 
@@ -73,8 +109,8 @@ const A4ReportDocument = forwardRef(({ issue }, ref) => {
             >
               주요 업무
             </td>
-            <td colSpan="3" style={{ border: '1px solid #000', padding: '6px' }}>
-              [{issue.category}] 관련 현장 검측 및 시정 조치 지시
+            <td colSpan="3" style={{ border: '1px solid #000', padding: '6px', fontWeight: '500' }}>
+              {getIssueSummary(issue)}
             </td>
           </tr>
           <tr>

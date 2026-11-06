@@ -102,6 +102,7 @@ export default function IssueRegisterView({ projects, weatherInfo, currentUser, 
 
     const fullMemo = `${memo} ${interimMemo}`.trim();
     let refinedContent = fullMemo;
+    let refinedSummary = '';
 
     if (fullMemo) {
       setIsAiProcessing(true);
@@ -109,6 +110,7 @@ export default function IssueRegisterView({ projects, weatherInfo, currentUser, 
         const data = await refineIssueMemoWithAi(category, fullMemo);
         if (data.success && data.text) {
           refinedContent = data.text;
+          refinedSummary = (data.summary || '').trim();
         } else if (data.error) {
           console.warn('AI 정제 실패 응답:', data.error);
           alert(`[AI 자동 정제 실패]\n원인: ${data.error}\n\n(원문 메모 그대로 등록됩니다)`);
@@ -118,6 +120,18 @@ export default function IssueRegisterView({ projects, weatherInfo, currentUser, 
         alert(`[AI 서버 연결 오류]\n${err.message || '백엔드 서버 응답 없음'}\n\n(원문 메모 그대로 등록됩니다)`);
       } finally {
         setIsAiProcessing(false);
+      }
+    }
+
+    // summary가 없으면 1줄 요약 자동 생성
+    if (!refinedSummary) {
+      if (refinedContent && refinedContent !== '특이사항 없음') {
+        const firstSentence = refinedContent.split(/(?<=[.?!])\s+|\n+/)[0] || refinedContent;
+        let clean = firstSentence.replace(/[.?!]+$/, '').trim();
+        if (clean.length > 40) clean = clean.substring(0, 37).trim() + '...';
+        refinedSummary = clean.startsWith('[') ? clean : `[${category}] ${clean}`;
+      } else {
+        refinedSummary = `[${category}] 현장 검측 및 특이사항 점검`;
       }
     }
 
@@ -132,6 +146,7 @@ export default function IssueRegisterView({ projects, weatherInfo, currentUser, 
       floorPlanUrl: selectedFloorPlan ? selectedFloorPlan.url : null,
       pin,
       photoUrl,
+      summary: refinedSummary,
       content: refinedContent || '특이사항 없음',
       createdAt: getFormattedDate(),
       weather: weatherInfo,
