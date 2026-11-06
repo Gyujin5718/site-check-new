@@ -11,6 +11,7 @@ import {
   fetchServerData,
   saveProjectToServer,
   saveIssueToServer,
+  deleteProjectFromServer,
 } from './api';
 import { getAutoWeather } from './api/weather';
 
@@ -115,6 +116,15 @@ export default function App() {
     );
   };
 
+  const handleDeleteProject = (projectId) => {
+    setProjects((prev) => prev.filter((p) => p.id !== projectId));
+
+    // 중앙 백엔드 DB 실시간 동기화
+    deleteProjectFromServer(projectId).catch((err) =>
+      console.warn('현장 삭제 서버 동기화 실패:', err)
+    );
+  };
+
   const handleSubmitIssue = (newIssue) => {
     setIssues((prev) => [newIssue, ...prev]);
     setCurrentView('ledger');
@@ -181,6 +191,7 @@ export default function App() {
             <ProjectManageView
               projects={projects}
               onSaveProject={handleSaveProject}
+              onDeleteProject={handleDeleteProject}
               currentUser={currentUser}
             />
           )}

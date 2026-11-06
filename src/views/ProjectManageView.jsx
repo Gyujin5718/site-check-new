@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 
-export default function ProjectManageView({ projects, onSaveProject, currentUser }) {
+export default function ProjectManageView({ projects, onSaveProject, onDeleteProject, currentUser }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState(null);
   const [name, setName] = useState('');
@@ -19,6 +19,17 @@ export default function ProjectManageView({ projects, onSaveProject, currentUser
     setFloorName('');
     setFloorFile(null);
     setTempPlans([]);
+  };
+
+  const handleDelete = () => {
+    if (!editingProjectId) return;
+    if (window.confirm(`[${name}] 현장을 정말로 삭제하시겠습니까?\n삭제된 현장은 복구할 수 없습니다.`)) {
+      if (onDeleteProject) {
+        onDeleteProject(editingProjectId);
+      }
+      alert(`[${name}] 현장이 삭제되었습니다.`);
+      resetForm();
+    }
   };
 
   const handleOpenCreate = () => {
@@ -401,10 +412,29 @@ export default function ProjectManageView({ projects, onSaveProject, currentUser
             >
               취소
             </button>
+            {editingProjectId && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                style={{
+                  flex: 1,
+                  padding: '14px',
+                  backgroundColor: '#fee2e2',
+                  color: '#dc2626',
+                  border: '1px solid #fecaca',
+                  borderRadius: '12px',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                삭제
+              </button>
+            )}
             <button
               type="submit"
               style={{
-                flex: 2,
+                flex: editingProjectId ? 1.5 : 2,
                 padding: '14px',
                 backgroundColor: '#4f46e5',
                 color: '#fff',
@@ -412,6 +442,7 @@ export default function ProjectManageView({ projects, onSaveProject, currentUser
                 borderRadius: '12px',
                 fontWeight: '700',
                 cursor: 'pointer',
+                whiteSpace: 'nowrap',
               }}
             >
               {editingProjectId ? '수정 사항 저장' : '현장 등록 완료'}

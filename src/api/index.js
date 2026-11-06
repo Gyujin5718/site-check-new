@@ -67,3 +67,13 @@ export async function saveIssueToServer(issue) {
   });
   return response.json();
 }
+
+/**
+ * 현장 정보 서버에서 삭제/동기화
+ */
+export async function deleteProjectFromServer(projectId) {
+  const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
+    method: 'DELETE',
+  });
+  return response.json();
+}
