@@ -35,3 +35,35 @@ export async function sendIssueEmail(payload) {
   });
   return response.json();
 }
+
+/**
+ * 중앙 서버의 최신 현장 및 지적사항 데이터 일괄 조회 (PC-모바일 동기화)
+ */
+export async function fetchServerData() {
+  const response = await fetch(`${API_BASE_URL}/api/data`);
+  return response.json();
+}
+
+/**
+ * 현장 정보 서버에 저장/동기화
+ */
+export async function saveProjectToServer(project) {
+  const response = await fetch(`${API_BASE_URL}/api/projects`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(project),
+  });
+  return response.json();
+}
+
+/**
+ * 지적사항 서버에 저장/동기화
+ */
+export async function saveIssueToServer(issue) {
+  const response = await fetch(`${API_BASE_URL}/api/issues`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(issue),
+  });
+  return response.json();
+}

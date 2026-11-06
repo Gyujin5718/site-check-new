@@ -6,7 +6,12 @@ import ProjectManageView from './views/ProjectManageView';
 import IssueRegisterView from './views/IssueRegisterView';
 import LedgerView from './views/LedgerView';
 import { INITIAL_PROJECTS, INITIAL_ISSUES, getKakaoRedirectUri } from './constants/config';
-import { authenticateWithKakao } from './api';
+import {
+  authenticateWithKakao,
+  fetchServerData,
+  saveProjectToServer,
+  saveIssueToServer,
+} from './api';
 import { getAutoWeather } from './api/weather';
 
 export default function App() {
@@ -72,6 +77,24 @@ export default function App() {
     }
   }, []);
 
+  // [실시간 동기화] 앱 실행 및 로그인 시 중앙 서버에서 최신 현장/지적 데이터 로드
+  useEffect(() => {
+    fetchServerData()
+      .then((res) => {
+        if (res.success) {
+          if (Array.isArray(res.projects) && res.projects.length > 0) {
+            setProjects(res.projects);
+          }
+          if (Array.isArray(res.issues) && res.issues.length > 0) {
+            setIssues(res.issues);
+          }
+        }
+      })
+      .catch((err) => {
+        console.warn('중앙 서버 데이터 조회 대기/오류 (로컬 캐시 사용):', err);
+      });
+  }, [currentUser]);
+
   const handleLogout = () => {
     localStorage.removeItem('kakao_user');
     setCurrentUser(null);
@@ -81,20 +104,34 @@ export default function App() {
   const handleSaveProject = (projectData) => {
     setProjects((prev) => {
       const exists = prev.some((p) => p.id === projectData.id);
-      if (exists) {
-        return prev.map((p) => (p.id === projectData.id ? projectData : p));
-      }
-      return [...prev, projectData];
+      return exists
+        ? prev.map((p) => (p.id === projectData.id ? projectData : p))
+        : [...prev, projectData];
     });
+
+    // 중앙 백엔드 DB 실시간 동기화
+    saveProjectToServer(projectData).catch((err) =>
+      console.warn('현장 정보 서버 동기화 실패 (로컬 우선 저장):', err)
+    );
   };
 
   const handleSubmitIssue = (newIssue) => {
     setIssues((prev) => [newIssue, ...prev]);
     setCurrentView('ledger');
+
+    // 중앙 백엔드 DB 실시간 동기화
+    saveIssueToServer(newIssue).catch((err) =>
+      console.warn('지적사항 서버 동기화 실패 (로컬 우선 저장):', err)
+    );
   };
 
   const handleUpdateIssue = (updatedIssue) => {
     setIssues((prev) => prev.map((item) => (item.id === updatedIssue.id ? updatedIssue : item)));
+
+    // 중앙 백엔드 DB 실시간 동기화
+    saveIssueToServer(updatedIssue).catch((err) =>
+      console.warn('지적사항 수정 서버 동기화 실패:', err)
+    );
   };
 
   // 로그인하지 않은 경우
