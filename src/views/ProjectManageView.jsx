@@ -255,17 +255,20 @@ export default function ProjectManageView({ projects, onSaveProject, currentUser
             >
               층별 도면 사전 업로드
             </label>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px' }}>
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', alignItems: 'center' }}>
               <input
                 type="text"
-                placeholder="층수 (예: 1층)"
+                placeholder="층수(예: 1층)"
                 value={floorName}
                 onChange={(e) => setFloorName(e.target.value)}
                 style={{
-                  width: '80px',
+                  width: '95px',
                   padding: '10px',
                   borderRadius: '8px',
                   border: '1px solid #cbd5e1',
+                  flexShrink: 0,
+                  boxSizing: 'border-box',
+                  fontSize: '12px',
                 }}
               />
               <input
@@ -275,23 +278,29 @@ export default function ProjectManageView({ projects, onSaveProject, currentUser
                 onChange={handleFloorFileChange}
                 style={{
                   flex: 1,
+                  minWidth: 0,
                   padding: '8px',
-                  fontSize: '12px',
+                  fontSize: '11px',
                   border: '1px solid #cbd5e1',
                   borderRadius: '8px',
                   backgroundColor: '#f8fafc',
+                  boxSizing: 'border-box',
                 }}
               />
               <button
                 type="button"
                 onClick={handleAddTempFloor}
                 style={{
-                  padding: '10px',
+                  padding: '10px 14px',
                   backgroundColor: '#334155',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '8px',
                   cursor: 'pointer',
+                  flexShrink: 0,
+                  whiteSpace: 'nowrap',
+                  fontWeight: '700',
+                  fontSize: '12px',
                 }}
               >
                 + 추가
@@ -311,13 +320,45 @@ export default function ProjectManageView({ projects, onSaveProject, currentUser
                       border: '1px solid #c7d2fe',
                       padding: '8px 12px',
                       borderRadius: '8px',
+                      gap: '8px',
                     }}
                   >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ fontSize: '12px', fontWeight: '800', color: '#4f46e5' }}>
+                    <div
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        flex: 1,
+                        minWidth: 0,
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <span
+                        style={{
+                          fontSize: '11.5px',
+                          fontWeight: '800',
+                          color: '#4f46e5',
+                          backgroundColor: '#e0e7ff',
+                          padding: '3px 8px',
+                          borderRadius: '6px',
+                          whiteSpace: 'nowrap',
+                          flexShrink: 0,
+                          letterSpacing: '-0.3px',
+                        }}
+                      >
                         [{p.floor}]
                       </span>
-                      <span style={{ fontSize: '11px', color: '#475569' }}>
+                      <span
+                        title={p.filename || '기존 도면 유지'}
+                        style={{
+                          fontSize: '11px',
+                          color: '#475569',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          flex: 1,
+                        }}
+                      >
                         {p.filename || '기존 도면 유지'}
                       </span>
                     </div>
@@ -330,9 +371,12 @@ export default function ProjectManageView({ projects, onSaveProject, currentUser
                         color: '#ef4444',
                         fontWeight: 'bold',
                         cursor: 'pointer',
+                        flexShrink: 0,
+                        padding: '2px 6px',
+                        fontSize: '13px',
                       }}
                     >
-                      X
+                      ✕
                     </button>
                   </div>
                 ))}

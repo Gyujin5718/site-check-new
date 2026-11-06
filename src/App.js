@@ -7,6 +7,7 @@ import IssueRegisterView from './views/IssueRegisterView';
 import LedgerView from './views/LedgerView';
 import { INITIAL_PROJECTS, INITIAL_ISSUES, getKakaoRedirectUri } from './constants/config';
 import { authenticateWithKakao } from './api';
+import { getAutoWeather } from './api/weather';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('menu');
@@ -33,11 +34,11 @@ export default function App() {
     localStorage.setItem('site_issues', JSON.stringify(issues));
   }, [issues]);
 
-  // 날씨 초기화 및 카카오 로그인/인가코드 처리
+  // 실시간 날씨 연동 (GPS 기반 또는 부산 기준 실시간 날씨 API)
   useEffect(() => {
-    const weatherTimer = setTimeout(() => {
-      setWeatherInfo({ condition: '맑음', high: '19', low: '9' });
-    }, 800);
+    getAutoWeather((weather) => {
+      setWeatherInfo(weather);
+    });
 
     const savedUser = localStorage.getItem('kakao_user');
     if (savedUser) {
@@ -69,8 +70,6 @@ export default function App() {
           alert('백엔드 서버가 켜져 있는지 확인해주세요.');
         });
     }
-
-    return () => clearTimeout(weatherTimer);
   }, []);
 
   const handleLogout = () => {
