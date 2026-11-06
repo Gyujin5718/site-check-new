@@ -5,6 +5,7 @@ import MainMenuView from './views/MainMenuView';
 import ProjectManageView from './views/ProjectManageView';
 import IssueRegisterView from './views/IssueRegisterView';
 import LedgerView from './views/LedgerView';
+import AiSettingsModal from './components/AiSettingsModal';
 import { INITIAL_PROJECTS, INITIAL_ISSUES, getKakaoRedirectUri } from './constants/config';
 import {
   authenticateWithKakao,
@@ -12,6 +13,7 @@ import {
   saveProjectToServer,
   saveIssueToServer,
   deleteProjectFromServer,
+  saveSettingsToServer,
 } from './api';
 import { getAutoWeather } from './api/weather';
 
@@ -19,6 +21,11 @@ export default function App() {
   const [currentView, setCurrentView] = useState('menu');
   const [currentUser, setCurrentUser] = useState(null);
   const [weatherInfo, setWeatherInfo] = useState({ condition: '조회 중...', high: '-', low: '-' });
+  const [aiSettings, setAiSettings] = useState(() => {
+    const saved = localStorage.getItem('ai_settings');
+    return saved ? JSON.parse(saved) : { tone: 'polite', customPrompt: '' };
+  });
+  const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
   const isAuthProcessingRef = useRef(false);
 
   // 로컬스토리지 연동을 통한 데이터 영속화
@@ -89,12 +96,25 @@ export default function App() {
           if (Array.isArray(res.issues) && res.issues.length > 0) {
             setIssues(res.issues);
           }
+          if (res.settings) {
+            setAiSettings(res.settings);
+            localStorage.setItem('ai_settings', JSON.stringify(res.settings));
+          }
         }
       })
       .catch((err) => {
         console.warn('중앙 서버 데이터 조회 대기/오류 (로컬 캐시 사용):', err);
       });
   }, [currentUser]);
+
+  const handleSaveAiSettings = (newSettings) => {
+    setAiSettings(newSettings);
+    localStorage.setItem('ai_settings', JSON.stringify(newSettings));
+    saveSettingsToServer(newSettings).catch((err) =>
+      console.warn('AI 설정 서버 동기화 실패 (로컬 우선 저장):', err)
+    );
+    alert('AI 답변 스타일 및 프롬프트 설정이 저장되었습니다.');
+  };
 
   const handleLogout = () => {
     localStorage.removeItem('kakao_user');
@@ -182,6 +202,7 @@ export default function App() {
           onBackToMenu={() => setCurrentView('menu')}
           currentUser={currentUser}
           onLogout={handleLogout}
+          onOpenAiSettings={() => setIsAiSettingsOpen(true)}
         />
 
         <div style={{ flex: 1, overflowY: 'auto', backgroundColor: '#f8fafc' }}>
@@ -202,6 +223,8 @@ export default function App() {
               weatherInfo={weatherInfo}
               currentUser={currentUser}
               onSubmitIssue={handleSubmitIssue}
+              aiSettings={aiSettings}
+              onOpenAiSettings={() => setIsAiSettingsOpen(true)}
             />
           )}
 
@@ -213,6 +236,14 @@ export default function App() {
             />
           )}
         </div>
+
+        {/* AI 답변 스타일 및 프롬프트 설정 모달 */}
+        <AiSettingsModal
+          isOpen={isAiSettingsOpen}
+          onClose={() => setIsAiSettingsOpen(false)}
+          settings={aiSettings}
+          onSaveSettings={handleSaveAiSettings}
+        />
       </div>
     </div>
   );

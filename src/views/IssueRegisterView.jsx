@@ -3,7 +3,14 @@ import { CATEGORIES } from '../constants/config';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { refineIssueMemoWithAi } from '../api';
 
-export default function IssueRegisterView({ projects, weatherInfo, currentUser, onSubmitIssue }) {
+export default function IssueRegisterView({
+  projects,
+  weatherInfo,
+  currentUser,
+  onSubmitIssue,
+  aiSettings,
+  onOpenAiSettings,
+}) {
   const [selectedProjectId, setSelectedProjectId] = useState('');
   const [selectedFloorPlan, setSelectedFloorPlan] = useState(null);
   const [category, setCategory] = useState(CATEGORIES[0]);
@@ -107,7 +114,10 @@ export default function IssueRegisterView({ projects, weatherInfo, currentUser, 
     if (fullMemo) {
       setIsAiProcessing(true);
       try {
-        const data = await refineIssueMemoWithAi(category, fullMemo);
+        const data = await refineIssueMemoWithAi(category, fullMemo, {
+          tone: aiSettings?.tone || 'polite',
+          customPrompt: aiSettings?.customPrompt || '',
+        });
         if (data.success && data.text) {
           refinedContent = data.text;
           refinedSummary = (data.summary || '').trim();
@@ -384,7 +394,31 @@ export default function IssueRegisterView({ projects, weatherInfo, currentUser, 
             marginBottom: '6px',
           }}
         >
-          <label style={{ fontSize: '13px', fontWeight: '700' }}>구두 메모 (AI 자동 정리)</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <label style={{ fontSize: '13px', fontWeight: '700' }}>구두 메모 (AI 자동 정리)</label>
+            {onOpenAiSettings && (
+              <button
+                type="button"
+                onClick={onOpenAiSettings}
+                style={{
+                  fontSize: '11px',
+                  color: '#4338ca',
+                  backgroundColor: '#eef2ff',
+                  border: '1px solid #c7d2fe',
+                  borderRadius: '6px',
+                  padding: '2px 7px',
+                  cursor: 'pointer',
+                  fontWeight: '700',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                }}
+                title="AI 답변 스타일 및 프롬프트 설정"
+              >
+                🤖 {aiSettings?.customPrompt ? '맞춤 지침 적용 중' : (aiSettings?.tone === 'cooperative' ? '협력형' : aiSettings?.tone === 'strict' ? '단호형' : '정중형')} ⚙️
+              </button>
+            )}
+          </div>
           <button
             type="button"
             onClick={toggleRecording}

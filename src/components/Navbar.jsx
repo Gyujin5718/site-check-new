@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function Navbar({ currentView, onBackToMenu, currentUser, onLogout }) {
+export default function Navbar({ currentView, onBackToMenu, currentUser, onLogout, onOpenAiSettings }) {
   const getTitle = () => {
     switch (currentView) {
       case 'project_new':
@@ -47,7 +47,28 @@ export default function Navbar({ currentView, onBackToMenu, currentUser, onLogou
           {getTitle()}
         </h1>
       </div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {onOpenAiSettings && (
+          <button
+            onClick={onOpenAiSettings}
+            title="AI 어조 및 프롬프트 설정"
+            style={{
+              border: '1px solid #c7d2fe',
+              background: '#eef2ff',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: '700',
+              cursor: 'pointer',
+              color: '#4338ca',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '2px',
+            }}
+          >
+            🤖 AI 설정
+          </button>
+        )}
         <span style={{ fontSize: '11px', color: '#475569', fontWeight: '700' }}>
           {currentUser?.nickname || '감독관'}
         </span>

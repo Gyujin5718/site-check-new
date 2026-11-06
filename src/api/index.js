@@ -15,11 +15,12 @@ export async function authenticateWithKakao(code, redirectUri) {
 /**
  * 음성/메모 원문을 AI를 통해 공문서 지적사항 양식으로 정제
  */
-export async function refineIssueMemoWithAi(category, memo) {
+export async function refineIssueMemoWithAi(category, memo, options = {}) {
+  const { tone = 'polite', customPrompt = '' } = options;
   const response = await fetch(`${API_BASE_URL}/api/ai-refine`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ category, memo }),
+    body: JSON.stringify({ category, memo, tone, customPrompt }),
   });
   return response.json();
 }
@@ -74,6 +75,18 @@ export async function saveIssueToServer(issue) {
 export async function deleteProjectFromServer(projectId) {
   const response = await fetch(`${API_BASE_URL}/api/projects/${projectId}`, {
     method: 'DELETE',
+  });
+  return response.json();
+}
+
+/**
+ * AI 답변 스타일 및 프롬프트 설정 서버 동기화
+ */
+export async function saveSettingsToServer(settings) {
+  const response = await fetch(`${API_BASE_URL}/api/settings`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(settings),
   });
   return response.json();
 }
