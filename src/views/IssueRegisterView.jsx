@@ -75,9 +75,13 @@ export default function IssueRegisterView({ projects, weatherInfo, currentUser, 
         const data = await refineIssueMemoWithAi(category, fullMemo);
         if (data.success && data.text) {
           refinedContent = data.text;
+        } else if (data.error) {
+          console.warn('AI 정제 실패 응답:', data.error);
+          alert(`[AI 자동 정제 실패]\n원인: ${data.error}\n\n(원문 메모 그대로 등록됩니다)`);
         }
       } catch (err) {
         console.warn('AI 서버 미연결 또는 응답 오류, 원문 메모 사용:', err);
+        alert(`[AI 서버 연결 오류]\n${err.message || '백엔드 서버 응답 없음'}\n\n(원문 메모 그대로 등록됩니다)`);
       } finally {
         setIsAiProcessing(false);
       }
@@ -122,9 +126,14 @@ export default function IssueRegisterView({ projects, weatherInfo, currentUser, 
         <span style={{ fontSize: '12px', fontWeight: '700', color: '#475569' }}>
           오늘 날씨 (자동)
         </span>
-        <span style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>
-          {weatherInfo.condition} (최고 {weatherInfo.high}℃ / 최저 {weatherInfo.low}℃)
-        </span>
+        <div style={{ textAlign: 'right' }}>
+          <div style={{ fontSize: '13px', fontWeight: '800', color: '#0f172a' }}>
+            {weatherInfo.condition}
+          </div>
+          <div style={{ fontSize: '11.5px', fontWeight: '700', color: '#64748b', marginTop: '2px' }}>
+            ({weatherInfo.high !== '-' ? `${weatherInfo.high}℃ / ${weatherInfo.low}℃` : '-'})
+          </div>
+        </div>
       </div>
 
       <div>

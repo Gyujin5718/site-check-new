@@ -95,18 +95,24 @@ const A4ReportDocument = forwardRef(({ issue }, ref) => {
             <td
               style={{
                 border: '1px solid #000',
-                padding: '6px',
+                padding: '4px 6px',
                 backgroundColor: '#f8fafc',
                 fontWeight: '700',
                 width: '22%',
                 textAlign: 'center',
+                verticalAlign: 'middle',
               }}
             >
-              날씨(기온)
+              <div style={{ fontSize: '11.5px' }}>날씨</div>
+              <div style={{ fontSize: '9.5px', color: '#475569', fontWeight: '600', marginTop: '1px' }}>
+                (최고기온 / 최저기온)
+              </div>
             </td>
-            <td style={{ border: '1px solid #000', padding: '6px', width: '28%' }}>
-              {issue.weather?.condition} (
-              {issue.weather ? `${issue.weather.high} / ${issue.weather.low}℃` : '-'})
+            <td style={{ border: '1px solid #000', padding: '4px 6px', width: '28%', textAlign: 'center', verticalAlign: 'middle' }}>
+              <div style={{ fontWeight: '600', fontSize: '11.5px' }}>{issue.weather?.condition || '-'}</div>
+              <div style={{ fontSize: '10.5px', color: '#334155', marginTop: '1px' }}>
+                ({issue.weather && issue.weather.high !== '-' ? `${issue.weather.high}℃ / ${issue.weather.low}℃` : '-'})
+              </div>
             </td>
           </tr>
           <tr>
