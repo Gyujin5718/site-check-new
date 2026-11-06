@@ -125,41 +125,55 @@ const A4ReportDocument = forwardRef(({ issue }, ref) => {
               colSpan="3"
               style={{
                 border: '1px solid #000',
-                padding: '4px 10px',
+                padding: '6px 14px',
                 textAlign: 'right',
                 verticalAlign: 'middle',
-                height: '38px',
+                height: '40px',
               }}
             >
               <div
                 style={{
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px',
-                  position: 'relative',
+                  gap: '8px',
                 }}
               >
-                <span style={{ fontSize: '12px', fontWeight: '700', marginRight: '4px' }}>
+                <span style={{ fontSize: '12px', fontWeight: '700' }}>
                   {issue.supervisorName || '공사감독관'}
                 </span>
-                <span style={{ fontSize: '11px' }}>(서명 또는 인)</span>
-                {issue.supervisorName && (
-                  <div
-                    style={{
-                      position: 'absolute',
-                      right: '-20px',
-                      top: '-15px',
-                      zIndex: 10,
-                      fontFamily: '"Nanum Pen Script", cursive',
-                      fontSize: '32px',
-                      color: '#000',
-                      transform: 'rotate(-5deg)',
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    {issue.supervisorName}
-                  </div>
-                )}
+                
+                {/* (서명 또는 인) 영역과 그 위에 겹쳐지는 얇은 서명 */}
+                <div
+                  style={{
+                    position: 'relative',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    minWidth: '70px',
+                  }}
+                >
+                  <span style={{ fontSize: '11px', color: '#475569' }}>(서명 또는 인)</span>
+                  {issue.supervisorName && (
+                    <span
+                      style={{
+                        position: 'absolute',
+                        left: '50%',
+                        top: '50%',
+                        transform: 'translate(-50%, -55%) rotate(-5deg)',
+                        fontFamily: '"Nanum Pen Script", cursive',
+                        fontSize: '23px',
+                        fontWeight: '400',
+                        color: '#0f172a',
+                        letterSpacing: '1px',
+                        whiteSpace: 'nowrap',
+                        pointerEvents: 'none',
+                        opacity: 0.9,
+                      }}
+                    >
+                      {issue.supervisorName}
+                    </span>
+                  )}
+                </div>
               </div>
             </td>
           </tr>
