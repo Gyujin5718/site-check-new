@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { CATEGORIES } from '../constants/config';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { refineIssueMemoWithAi } from '../api';
@@ -15,26 +15,60 @@ export default function IssueRegisterView({ projects, weatherInfo, currentUser, 
   const { isRecording, memo, setMemo, interimMemo, toggleRecording, stopRecording } =
     useSpeechRecognition();
 
-  // 사진 업로드 및 이전 ObjectURL 해제 (메모리 누수 방지)
-  const handlePhotoUpload = (e) => {
+  // [아이폰/모바일 최적화] 사진 자동 리사이징 및 Base64 압축 변환
+  const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let width = img.width;
+          let height = img.height;
+
+          if (width > maxWidth || height > maxHeight) {
+            if (width > height) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            } else {
+              width = Math.round((width * maxHeight) / height);
+              height = maxHeight;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+
+          // 영구적으로 PC/모바일 어디서든 열리는 초경량 고화질 JPEG Data URL 생성
+          const dataUrl = canvas.toDataURL('image/jpeg', quality);
+          resolve(dataUrl);
+        };
+        img.onerror = reject;
+        img.src = e.target.result;
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  // 사진 업로드 처리 (아이폰 거대 용량 및 기기간 연동 완벽 호환)
+  const handlePhotoUpload = async (e) => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
-    if (photoUrl && photoUrl.startsWith('blob:')) {
-      URL.revokeObjectURL(photoUrl);
+    try {
+      const compressedDataUrl = await compressImage(file, 1200, 1200, 0.8);
+      setPhotoUrl(compressedDataUrl);
+    } catch (err) {
+      console.warn('이미지 압축 실패, 기본 Base64 변환 사용:', err);
+      const reader = new FileReader();
+      reader.onload = () => setPhotoUrl(reader.result);
+      reader.readAsDataURL(file);
     }
-    const newUrl = URL.createObjectURL(file);
-    setPhotoUrl(newUrl);
   };
-
-  // 컴포넌트 언마운트 시 생성했던 Blob URL 정리
-  useEffect(() => {
-    return () => {
-      if (photoUrl && photoUrl.startsWith('blob:')) {
-        URL.revokeObjectURL(photoUrl);
-      }
-    };
-  }, [photoUrl]);
 
   // 도면 클릭 시 백분율(%) 좌표로 계산하여 저장 (반응형 및 A4 인쇄 위치 완벽 일치)
   const handlePlanClick = (e) => {
