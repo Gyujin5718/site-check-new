@@ -36,8 +36,13 @@ export const getIssueSummary = (issue) => {
   return issue.category ? `[${issue.category}] ${cleanSentence}` : cleanSentence;
 };
 
-const A4ReportDocument = forwardRef(({ issue }, ref) => {
+const A4ReportDocument = forwardRef(({ issue, projects = [] }, ref) => {
   if (!issue) return null;
+
+  // 도면 URL 추출 (지적사항 자체 보관 또는 프로젝트 층별 도면 fallback)
+  const targetProject = projects.find((p) => p.id === issue.projectId);
+  const matchedPlan = targetProject?.plans?.find((p) => p.floor === issue.floor);
+  const displayPlanUrl = issue.floorPlanUrl || matchedPlan?.url;
 
   return (
     <div
@@ -253,7 +258,7 @@ const A4ReportDocument = forwardRef(({ issue }, ref) => {
                   >
                     - 지적 위치 ({issue.floor})
                   </div>
-                  {issue.floorPlanUrl ? (
+                  {displayPlanUrl ? (
                     <div
                       style={{
                         position: 'relative',
@@ -263,7 +268,7 @@ const A4ReportDocument = forwardRef(({ issue }, ref) => {
                       }}
                     >
                       <img
-                        src={issue.floorPlanUrl}
+                        src={displayPlanUrl}
                         alt="도면"
                         crossOrigin="anonymous"
                         style={{ width: '100%', height: '100%', objectFit: 'contain' }}

@@ -345,7 +345,7 @@ export default function LedgerView({ issues, projects, onUpdateIssue }) {
       )}
 
       {/* A4 공사감독일지 출력 템플릿 컴포넌트 */}
-      <A4ReportDocument ref={printDocRef} issue={selectedIssue} />
+      <A4ReportDocument ref={printDocRef} issue={selectedIssue} projects={projects} />
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '14px' }}>
         <button

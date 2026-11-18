@@ -2,6 +2,7 @@ import React, { useState, useRef } from 'react';
 import { CATEGORIES } from '../constants/config';
 import { useSpeechRecognition } from '../hooks/useSpeechRecognition';
 import { refineIssueMemoWithAi } from '../api';
+import { compressImage } from '../utils/imageCompressor';
 
 export default function IssueRegisterView({
   projects,
@@ -22,44 +23,6 @@ export default function IssueRegisterView({
   const { isRecording, memo, setMemo, interimMemo, toggleRecording, stopRecording } =
     useSpeechRecognition();
 
-  // [아이폰/모바일 최적화] 사진 자동 리사이징 및 Base64 압축 변환
-  const compressImage = (file, maxWidth = 1200, maxHeight = 1200, quality = 0.8) => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const img = new Image();
-        img.onload = () => {
-          let width = img.width;
-          let height = img.height;
-
-          if (width > maxWidth || height > maxHeight) {
-            if (width > height) {
-              height = Math.round((height * maxWidth) / width);
-              width = maxWidth;
-            } else {
-              width = Math.round((width * maxHeight) / height);
-              height = maxHeight;
-            }
-          }
-
-          const canvas = document.createElement('canvas');
-          canvas.width = width;
-          canvas.height = height;
-
-          const ctx = canvas.getContext('2d');
-          ctx.drawImage(img, 0, 0, width, height);
-
-          // 영구적으로 PC/모바일 어디서든 열리는 초경량 고화질 JPEG Data URL 생성
-          const dataUrl = canvas.toDataURL('image/jpeg', quality);
-          resolve(dataUrl);
-        };
-        img.onerror = reject;
-        img.src = e.target.result;
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
-  };
 
   // 사진 업로드 처리 (아이폰 거대 용량 및 기기간 연동 완벽 호환)
   const handlePhotoUpload = async (e) => {

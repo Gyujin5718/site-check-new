@@ -16,36 +16,64 @@ import {
   saveSettingsToServer,
 } from './api';
 import { getAutoWeather } from './api/weather';
+import {
+  idbSet,
+  loadInitialProjects,
+  loadInitialIssues,
+  loadInitialAiSettings,
+} from './utils/storage';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('menu');
   const [currentUser, setCurrentUser] = useState(null);
   const [weatherInfo, setWeatherInfo] = useState({ condition: '조회 중...', high: '-', low: '-' });
-  const [aiSettings, setAiSettings] = useState(() => {
-    const saved = localStorage.getItem('ai_settings');
-    return saved ? JSON.parse(saved) : { tone: 'polite', customPrompt: '' };
-  });
+  const [aiSettings, setAiSettings] = useState({ tone: 'polite', customPrompt: '' });
   const [isAiSettingsOpen, setIsAiSettingsOpen] = useState(false);
+  const [isStorageReady, setIsStorageReady] = useState(false);
   const isAuthProcessingRef = useRef(false);
 
-  // 로컬스토리지 연동을 통한 데이터 영속화
-  const [projects, setProjects] = useState(() => {
-    const saved = localStorage.getItem('site_projects');
-    return saved ? JSON.parse(saved) : INITIAL_PROJECTS;
-  });
+  // [영구 저장] IndexedDB 연동을 통한 대용량 도면 및 지적사항 대장 데이터 영속화
+  const [projects, setProjects] = useState(INITIAL_PROJECTS);
+  const [issues, setIssues] = useState(INITIAL_ISSUES);
 
-  const [issues, setIssues] = useState(() => {
-    const saved = localStorage.getItem('site_issues');
-    return saved ? JSON.parse(saved) : INITIAL_ISSUES;
-  });
+  // 1. 앱 기동 시 IndexedDB에서 데이터 안전 복구 (localStorage 자동 마이그레이션 포함)
+  useEffect(() => {
+    let isMounted = true;
+    Promise.all([
+      loadInitialProjects(INITIAL_PROJECTS),
+      loadInitialIssues(INITIAL_ISSUES),
+      loadInitialAiSettings({ tone: 'polite', customPrompt: '' }),
+    ])
+      .then(([loadedProjects, loadedIssues, loadedSettings]) => {
+        if (isMounted) {
+          setProjects(loadedProjects);
+          setIssues(loadedIssues);
+          setAiSettings(loadedSettings);
+          setIsStorageReady(true);
+        }
+      })
+      .catch((err) => {
+        console.error('IndexedDB 스토리지 로드 실패:', err);
+        if (isMounted) setIsStorageReady(true);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 2. 데이터 변경 시 IndexedDB 비동기 영구 저장 (용량 제한 없이 수백 MB 이상 안전 보관)
+  useEffect(() => {
+    if (isStorageReady) {
+      idbSet('site_projects', projects);
+    }
+  }, [projects, isStorageReady]);
 
   useEffect(() => {
-    localStorage.setItem('site_projects', JSON.stringify(projects));
-  }, [projects]);
-
-  useEffect(() => {
-    localStorage.setItem('site_issues', JSON.stringify(issues));
-  }, [issues]);
+    if (isStorageReady) {
+      idbSet('site_issues', issues);
+    }
+  }, [issues, isStorageReady]);
 
   // 실시간 날씨 연동 (GPS 기반 또는 부산 기준 실시간 날씨 API)
   useEffect(() => {
@@ -98,6 +126,7 @@ export default function App() {
           }
           if (res.settings) {
             setAiSettings(res.settings);
+            idbSet('ai_settings', res.settings);
             localStorage.setItem('ai_settings', JSON.stringify(res.settings));
           }
         }
@@ -109,6 +138,7 @@ export default function App() {
 
   const handleSaveAiSettings = (newSettings) => {
     setAiSettings(newSettings);
+    idbSet('ai_settings', newSettings);
     localStorage.setItem('ai_settings', JSON.stringify(newSettings));
     saveSettingsToServer(newSettings).catch((err) =>
       console.warn('AI 설정 서버 동기화 실패 (로컬 우선 저장):', err)

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { compressImage } from '../utils/imageCompressor';
 
 export default function ProjectManageView({ projects, onSaveProject, onDeleteProject, currentUser }) {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -9,6 +10,7 @@ export default function ProjectManageView({ projects, onSaveProject, onDeletePro
   const [floorName, setFloorName] = useState('');
   const [floorFile, setFloorFile] = useState(null);
   const [tempPlans, setTempPlans] = useState([]);
+  const [isCompressingPlan, setIsCompressingPlan] = useState(false);
 
   const resetForm = () => {
     setIsFormOpen(false);
@@ -52,7 +54,7 @@ export default function ProjectManageView({ projects, onSaveProject, onDeletePro
     }
   };
 
-  const handleAddTempFloor = () => {
+  const handleAddTempFloor = async () => {
     if (!floorName.trim()) {
       alert('층수(예: 1층)를 먼저 입력해주세요.');
       return;
@@ -62,18 +64,35 @@ export default function ProjectManageView({ projects, onSaveProject, onDeletePro
       return;
     }
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
+    setIsCompressingPlan(true);
+    try {
+      // 대용량 원본 도면을 선명도 유지하며 최적화된 고화질 경량 Data URL로 압축
+      const compressedUrl = await compressImage(floorFile, 1920, 1920, 0.82);
       setTempPlans((prev) => [
         ...prev,
-        { floor: floorName.trim(), url: reader.result, filename: floorFile.name },
+        { floor: floorName.trim(), url: compressedUrl, filename: floorFile.name },
       ]);
       setFloorName('');
       setFloorFile(null);
       const inputEl = document.getElementById('floor-file-input');
       if (inputEl) inputEl.value = '';
-    };
-    reader.readAsDataURL(floorFile);
+    } catch (err) {
+      console.warn('도면 압축 실패, 원본 Base64로 대체:', err);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setTempPlans((prev) => [
+          ...prev,
+          { floor: floorName.trim(), url: reader.result, filename: floorFile.name },
+        ]);
+        setFloorName('');
+        setFloorFile(null);
+        const inputEl = document.getElementById('floor-file-input');
+        if (inputEl) inputEl.value = '';
+      };
+      reader.readAsDataURL(floorFile);
+    } finally {
+      setIsCompressingPlan(false);
+    }
   };
 
   const handleRemoveTempFloor = (index) => {
@@ -301,20 +320,21 @@ export default function ProjectManageView({ projects, onSaveProject, onDeletePro
               <button
                 type="button"
                 onClick={handleAddTempFloor}
+                disabled={isCompressingPlan}
                 style={{
                   padding: '10px 14px',
-                  backgroundColor: '#334155',
+                  backgroundColor: isCompressingPlan ? '#94a3b8' : '#334155',
                   color: '#fff',
                   border: 'none',
                   borderRadius: '8px',
-                  cursor: 'pointer',
+                  cursor: isCompressingPlan ? 'not-allowed' : 'pointer',
                   flexShrink: 0,
                   whiteSpace: 'nowrap',
                   fontWeight: '700',
                   fontSize: '12px',
                 }}
               >
-                + 추가
+                {isCompressingPlan ? '최적화 중...' : '+ 추가'}
               </button>
             </div>
 
